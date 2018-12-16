@@ -1,5 +1,4 @@
 import re
-from collections import Counter
 
 
 class Main(object):
@@ -54,8 +53,9 @@ class Main(object):
         ngrams_and_pre_words: dict = {}
         first_word_i = n - 1
         end_i = len(corpus_tokens) - 1
+        make_pre_word_ngram = True
         for i in range(first_word_i, end_i):
-            pre_words_ngrams = self._make_pre_words_ngram(corpus_tokens, i, n)
+            pre_words_ngrams = self._make_ngram(corpus_tokens, make_pre_word_ngram, i, n)
             current_token = (corpus_tokens[i],)
             ngrams = tuple(pre_words_ngrams) + current_token
             if self.Strs.END.value in ngrams:
@@ -64,17 +64,22 @@ class Main(object):
                 ngrams_and_pre_words[ngrams] = pre_words_ngrams
         return ngrams_and_pre_words
 
-    def _make_pre_words_ngram(self, corpus_tokens: list, corpus_index: int, n: int):
+    def _make_ngram(self, corpus_tokens: list, make_pre_word_ngram: bool, corpus_index: int, n: int):
         """
-        Make list of words that precede current word (at corpus_index) according to size n-gram.
+        Make tuple of words that make up an ngram according to size n-gram. Also makes ngram preceding each word
+        token.
         :param corpus_tokens: Tokenized corpus, as produced by self.tokenize(corpus).
         :param corpus_index: Position of current word token according to 0-indexing.
+        :param make_pre_word_ngram: True to make ngram of preceding words only (not including the last word token).
         :param n: Size of n-gram (as number of words).
         :return: List of words that precede current word in corpus.
         """
         pre_words_ngram = []
+        end_i = -1
         if corpus_index - (n - 1) >= 0:
-            for i in range(n - 1, 0, -1):
+            if make_pre_word_ngram:
+                end_i = 0
+            for i in range(n - 1, end_i, -1):
                 pre_words_ngram.append(corpus_tokens[corpus_index - i])
         return tuple(pre_words_ngram)
 
@@ -120,6 +125,11 @@ class Main(object):
                     else:
                         ngram_occurrences[ngram_key] = 1
         return ngram_occurrences
+
+    def compute_likelihood(self, corpus: str, test_corpus: str, n: int):
+        probs_per_ngram = self.compute_probabilities_per_word(corpus, n)
+        # likelihood_of_test_corpus =
+
 
     from enum import Enum
 

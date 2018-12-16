@@ -39,9 +39,16 @@ class TestMain(TestCase):
         actual = self.main._parse_punctuation(corpus=self.corpus1)
         self.assertEqual(expected, actual)
 
-    def test__make_pre_words_ngram(self):
+    def test__make_ngram_pre_word_True(self):
         expected = ('i', 'like', 'python')
-        actual = self.main._make_pre_words_ngram(corpus_tokens=self.corpus3_tokens_n4, corpus_index=6, n=4)
+        actual = self.main._make_ngram(corpus_tokens=self.corpus3_tokens_n4, make_pre_word_ngram=True,
+                                       corpus_index=6, n=4)
+        self.assertEqual(expected, actual)
+
+    def test__make_ngram(self):
+        expected = ('i', 'like', 'python', 'programming')
+        actual = self.main._make_ngram(corpus_tokens=self.corpus3_tokens_n4, make_pre_word_ngram=False,
+                                       corpus_index=6, n=4)
         self.assertEqual(expected, actual)
 
     def test_make_ngrams_and_pre_word_ngrams(self):
