@@ -87,7 +87,7 @@ class TestMain(TestCase):
 
     def test__count_occurrences(self):
         expected = {('#start#', 'i'): 1, ('i', 'like'): 1, ('like', 'python'): 1, ('python', 'programming'): 1}
-        actual = self.main._count_occurrences(corpus_tokens=self.corpus3_tokens_n2, num=2)
+        actual = self.main._count_occurrences(corpus_tokens=self.corpus3_tokens_n2, window_size=2)
         self.assertEqual(expected, actual)
 
     # def test_measure_sze_of_objects(self):
