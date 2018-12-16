@@ -42,26 +42,31 @@ class Main(object):
         corpus = pattern_stop_punct.sub(' ' + self.Strs.END.value, corpus)
         return corpus
 
-    def make_pre_word_ngrams(self, corpus_tokens: list, n: int):
+    def make_ngram_and_pre_word_list(self, corpus_tokens: list, n: int):
         """
-        Make a list of n-gram words that precede each word, sampling the corpus with a sliding window of one word.
-        E.g. corpus_tokens=['#start#', 'i', 'like', 'python', 'programming', '#end#'] and n=3 would produce:
-        [['#start#','#start#'],['#start#','i'], ['i','like'],['like','python']]
+        Make lists of n-grams paired to the preceding (n-1)-gram with the whole n-gram as the key and the preceding
+        words as the value. For example: where n=4, the 4-gram list for word D is [A,B,C,D]. The key-value paired
+        lists are: [A,B,C,D]:[A,B,C].
         :param corpus_tokens: A corpus stored as a list of words produced by self.tokenize(corpus_tokens).
         :param n: Size of the n-gram (as number of words).
-        :return:
+        :return: Lists of n-gram paired to their preceding (n-1)-gram.
         """
+        ngrams_and_pre_words: dict = {}
         first_word_i = n - 1
         end_i = len(corpus_tokens) - 1
-        pre_words_ngrams = [self._get_preceeding_words(corpus_tokens, i, n) for i in range(first_word_i, end_i)]
-        return pre_words_ngrams
+        for i in range(first_word_i, end_i):
+            pre_words_ngrams = self._make_pre_words_ngram(corpus_tokens, i, n)
+            current_token = (corpus_tokens[i],)
+            ngrams = tuple(pre_words_ngrams) + current_token
+            ngrams_and_pre_words[ngrams] = pre_words_ngrams
+        return ngrams_and_pre_words
 
-    def _get_preceeding_words(self, corpus_tokens: list, corpus_index: int, n: int):
-        pre_words = []
+    def _make_pre_words_ngram(self, corpus_tokens: list, corpus_index: int, n: int):
+        pre_words_ngram = []
         if corpus_index - (n - 1) >= 0:
             for i in range(n - 1, 0, -1):
-                pre_words.append(corpus_tokens[corpus_index - i])
-        return pre_words
+                pre_words_ngram.append(corpus_tokens[corpus_index - i])
+        return pre_words_ngram
 
     def count_occurrences(self, corpus_tokens: str):
         """
@@ -72,6 +77,9 @@ class Main(object):
         """
         token_counts = Counter(corpus_tokens)
         return token_counts
+
+    # def compute_probabilities_per_word(self, test_):
+
 
     from enum import Enum
 
