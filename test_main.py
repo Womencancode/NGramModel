@@ -1,6 +1,6 @@
+import sys
 from unittest import TestCase
 from Main import Main
-import sys
 from pympler.asizeof import asizeof
 
 
@@ -39,20 +39,17 @@ class TestMain(TestCase):
         actual = self.main._parse_punctuation(corpus=self.corpus1)
         self.assertEqual(expected, actual)
 
-    def test_make_pre_word_ngrams_n3(self):
-        expected = [['#start#', '#start#'], ['#start#', 'i'], ['i', 'like'], ['like', 'python']]
-        actual = self.main.make_pre_word_ngrams(corpus_tokens=self.corpus3_tokens_n3, n=3)
-        self.assertEqual(expected, actual)
-
-    def test_make_pre_word_ngrams_n4(self):
-        expected = [['#start#', '#start#', '#start#'], ['#start#', '#start#', 'i'], ['#start#', 'i', 'like'],
-                    ['i', 'like', 'python']]
-        actual = self.main.make_pre_word_ngrams(corpus_tokens=self.corpus3_tokens_n4, n=4)
-        self.assertEqual(expected, actual)
-
-    def test__get_preceeding_words(self):
+    def test__make_pre_words_ngram(self):
         expected = ['i', 'like', 'python']
-        actual = self.main._get_preceeding_words(corpus_tokens=self.corpus3_tokens_n4, corpus_index=6, n=4)
+        actual = self.main._make_pre_words_ngram(corpus_tokens=self.corpus3_tokens_n4, corpus_index=6, n=4)
+        self.assertEqual(expected, actual)
+
+    def test_make_ngram_and_pre_word_list(self):
+        expected = {('#start#', '#start#', '#start#', 'i'): ['#start#', '#start#', '#start#'],
+                    ('#start#', '#start#', 'i', 'like'): ['#start#', '#start#', 'i'],
+                    ('#start#', 'i', 'like', 'python'): ['#start#', 'i', 'like'],
+                    ('i', 'like', 'python', 'programming'): ['i', 'like', 'python']}
+        actual = self.main.make_ngram_and_pre_word_list(corpus_tokens=self.corpus3_tokens_n4, n=4)
         self.assertEqual(expected, actual)
 
     def test_count_occurences(self):
