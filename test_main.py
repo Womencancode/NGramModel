@@ -40,25 +40,59 @@ class TestMain(TestCase):
         self.assertEqual(expected, actual)
 
     def test__make_pre_words_ngram(self):
-        expected = ['i', 'like', 'python']
+        expected = ('i', 'like', 'python')
         actual = self.main._make_pre_words_ngram(corpus_tokens=self.corpus3_tokens_n4, corpus_index=6, n=4)
         self.assertEqual(expected, actual)
 
-    def test_make_ngram_and_pre_word_list(self):
-        expected = {('#start#', '#start#', '#start#', 'i'): ['#start#', '#start#', '#start#'],
-                    ('#start#', '#start#', 'i', 'like'): ['#start#', '#start#', 'i'],
-                    ('#start#', 'i', 'like', 'python'): ['#start#', 'i', 'like'],
-                    ('i', 'like', 'python', 'programming'): ['i', 'like', 'python']}
-        actual = self.main.make_ngram_and_pre_word_list(corpus_tokens=self.corpus3_tokens_n4, n=4)
+    def test_make_ngrams_and_pre_word_ngrams(self):
+        expected = {('#start#', '#start#', '#start#', 'i'): ('#start#', '#start#', '#start#'),
+                    ('#start#', '#start#', 'i', 'like'): ('#start#', '#start#', 'i'),
+                    ('#start#', 'i', 'like', 'python'): ('#start#', 'i', 'like'),
+                    ('i', 'like', 'python', 'programming'): ('i', 'like', 'python')}
+        actual = self.main.make_ngrams_and_pre_word_ngrams(corpus_tokens=self.corpus3_tokens_n4, n=4)
         self.assertEqual(expected, actual)
 
-    def test_count_occurences(self):
-        expected = {'#start#': 3, 'there': 2, 'is': 3, 'a': 2, 'potato': 3, 'on': 4, 'my': 3, 'foot': 4, '#end#': 3,
-                    'the': 1, 'that': 1, 'has': 1, 'it': 1}
-        actual = self.main.count_occurrences(corpus_tokens=self.corpus2_tokens_n2)
+    def test_compute_probabilities_per_word(self):
+        """
+        'There is a potato on my foot. There is foot on my potato. The potato that is on my foot  has a foot on it.'
+        (sum(there|#start#) = 2 / sum(#start#) = 3) = 2/3
+        (sum(is|there) = 2 / sum(there) = 2) = 1
+        (sum(a|is) = 1 / sum(is) = 3) = 1/3
+        (sum(potato|a) = 1 / sum(a) = 2) = 1/2
+        (sum(on|potato) = 1 / sum(potato) = 3) = 1/3
+        (sum(my|on) = 3 / sum(on) = 4) = 3/4
+        (sum(foot|my) = 2 / sum(my) = 3) = 2/3
+        (sum(foot|is) = 1 / sum(is) = 3) = 1/3
+        (sum(on|foot) = 2 / sum(foot) = 4) = 2/4
+        (sum(potato|my) = 1 / sum(potato) = 3) = 1/3
+        (sum(the|#start#) = 1 / sum(#start#) = 3) = 1/3
+        (sum(potato|the) = 1 / sum(the) = 1) = 1
+        (sum(that|potato) = 1 / sum(potato) = 3) = 1/3
+        (sum(is|that) = 1 / sum(that) = 1) = 1
+        (sum(on|is) = 1 / sum(is) = 3) = 1/3
+        (sum(has|foot) = 1 / sum(foot) = 4) = 1/4
+        (sum(a|has) = 1 / sum(has) = 1) = 1
+        (sum(foot|a) = 1 / sum(a) = 2) = 1/2
+        (sum(it|on) = 1 / sum(on) = 4) = 1/4
+        2/3 x 1 x 1/3 x 1/2 x 1/3 x 3/4 x 2/3 x 1/3 x 2/4 x 1/3 x 1/3 x 1 x 1/3 x 1 x 1/3 x 1/4 x 1 x 1/2 x 1/4
+        """
+        expected = {('#start#', 'there'): 2/3, ('there', 'is'): 1/1, ('is', 'a'): 1/3, ('a', 'potato'): 1/2,
+                    ('potato', 'on'): 1/3, ('on', 'my'): 3/4, ('my', 'foot'): 2/3, ('is', 'foot'): 1/3,
+                    ('foot', 'on'): 2/4, ('my', 'potato'): 1/3, ('#start#', 'the'): 1/3, ('the', 'potato'): 1/1,
+                    ('potato', 'that'): 1/3, ('that', 'is'): 1/1, ('is', 'on'): 1/3, ('foot', 'has'): 1/4,
+                    ('has', 'a'): 1/1, ('a', 'foot'): 1/2, ('on', 'it'): 1/4}
+        actual = self.main.compute_probabilities_per_word(corpus=self.corpus2, n=2)
+        self.maxDiff = None
         self.assertEqual(expected, actual)
-        print(str(asizeof(self.main, set())))
+
+    def test__count_occurrences(self):
+        expected = {('#start#', 'i'): 1, ('i', 'like'): 1, ('like', 'python'): 1, ('python', 'programming'): 1}
+        actual = self.main._count_occurrences(corpus_tokens=self.corpus3_tokens_n2, num=2)
+        self.assertEqual(expected, actual)
 
     # def test_measure_sze_of_objects(self):
     #     print('Size of main object: ' + str(sys.getsizeof(self.main, set())))
     #     print('Deep size of main object: ' + str(asizeof(self.main, set())))
+
+
+
