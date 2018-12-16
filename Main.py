@@ -95,14 +95,21 @@ class Main(object):
             probs_per_ngram[ngram] = ngram_occurrences[ngram] / pre_ngram_occurrences[pre_ngram]
         return probs_per_ngram
 
-    def _count_occurrences(self, corpus_tokens: list, num: int):
+    def _count_occurrences(self, corpus_tokens: list, window_size: int):
+        """
+        Count number of occurrences of every n-gram in corpus list with sliding window of one word, according to 
+        specified window size.
+        :param corpus_tokens: Tokenized corpus, as produced by self.tokenize(corpus).
+        :param window_size: Number of word tokens, typically the n of an n-gram or n-1 of 'pre_words' n-gram.
+        :return: N-gram paired to the number of its occurrences.
+        """
         ngram_occurrences = {}
         for i, corpus_token in enumerate(corpus_tokens):
             ngram = []
-            if i + num > len(corpus_tokens) - 1:
+            if i + window_size > len(corpus_tokens) - 1:
                 break
             else:
-                for j in range(num):
+                for j in range(window_size):
                     ngram.append(corpus_tokens[i + j])
                 if self.Strs.END.value in ngram:
                     continue
@@ -113,16 +120,6 @@ class Main(object):
                     else:
                         ngram_occurrences[ngram_key] = 1
         return ngram_occurrences
-
-    # def count_occurrences(self, corpus_tokens: str):
-    #     """
-    #     Count the number of occurrences of each word (token).
-    #     :param corpus_tokens: Tokenized corpus, as produced by self.tokenize(corpus).
-    #     :return: Number of occurrences of a token as key-value pairs, with tokens as the key and number of
-    #     occurrences as the associated value)
-    #     """
-    #     token_counts = Counter(corpus_tokens)
-    #     return token_counts
 
     from enum import Enum
 
