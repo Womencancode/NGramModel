@@ -9,7 +9,7 @@ class TestMain(TestCase):
     def setUp(self):
         self.main = Main()
         self.corpus1 = 'I ,have|[] a :big h~()ouse! _The? "boat is light-blue.;'
-        self.corpus2 = 'There is a potato on my foot. There is foot on my potato. The potato that is on my foot  has ' \
+        self.corpus2 = 'There is a potato on my foot. There is foot on my potato. The potato that is on my foot has ' \
                        'a foot on it.'
         self.corpus3 = 'I like Python programming.'
         self.corpus4 = 'I like Python programming. But I like machine learning even more, I do.'
@@ -62,7 +62,7 @@ class TestMain(TestCase):
 
     def test_compute_probabilities_per_word(self):
         """
-        'There is a potato on my foot. There is foot on my potato. The potato that is on my foot  has a foot on it.'
+        'There is a potato on my foot. There is foot on my potato. The potato that is on my foot has a foot on it.'
         (sum(there|#start#) = 2 / sum(#start#) = 3) = 2/3
         (sum(is|there) = 2 / sum(there) = 2) = 1
         (sum(a|is) = 1 / sum(is) = 3) = 1/3

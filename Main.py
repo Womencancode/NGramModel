@@ -67,11 +67,11 @@ class Main(object):
 
     def _make_ngrams(self, corpus_tokens: list, corpus_index: int, n: int, make_pre_word_ngram=False):
         """
-        Make list of words that make up an ngram according to size n-gram. Also makes ngram preceding each word token.
+        Make list of words that make up an n-gram according to size of n. Can also make the n-gram preceding each word.
         :param corpus_tokens: Tokenized corpus, as produced by self.tokenize(corpus).
         :param corpus_index: Position of current word token according to 0-indexing.
-        :param make_pre_word_ngram: True to make ngram of preceding words only (not including the last word token).
         :param n: Size of n-gram (as number of words).
+        :param make_pre_word_ngram: True to make n-gram of preceding words only (not including the last word token).
         :return: List of words that precede current word in corpus.
         """
         ngrams = []
@@ -83,7 +83,7 @@ class Main(object):
     def compute_probabilities_per_word(self, corpus: str, n: int):
         """
         Compute a list of probabilities of n-grams in a corpus, sampled with a sliding window of one word,
-        in natural order of English text (from left to right).
+        in the normal left-to-right direction of English text.
         :param corpus: Space-delimited words.
         :param n: Size of the n-gram (as number of words).
         :return: List of n-grams each paired with their computed probability.
@@ -124,6 +124,14 @@ class Main(object):
         return ngram_occurrences
 
     def compute_likelihood(self, corpus: str, test_corpus: str, n: int):
+        """
+        Calculate likelihood of a test corpus, based on the probabilities of all n-grams in a training corpus (which
+        is based on the Markov assumption). The likelihood is a product of the aforementioned probabilities.
+        :param corpus: Space-delimited words, used as a training corpus.
+        :param test_corpus: The likelihood of all of these words in the exact order they are in, is calculated here.
+        :param n: Size of the n-gram (as number of words).
+        :return: Likelihood of the test corpus.
+        """
         probs_per_ngram = self.compute_probabilities_per_word(corpus, n)
         test_corpus_tokens = self.tokenize(test_corpus, n)
         test_corpus_ngrams = ()
@@ -138,8 +146,16 @@ class Main(object):
         return likelihood_of_test_corpus
 
     def compute_perplexity(self, corpus: str, test_corpus: str, n: int):
+        """
+        Calculate the perplexity of a test corpus, based on the likelihood of the test corpus, according to the
+        equation that perplexity is the likelihood taken to the power of -1 / (length of the test corpus).
+        :param corpus: Space-delimited words, used as a training corpus.
+        :param test_corpus: The perplexity of all of these words in the exact order they are in, is calculated here.
+        :param n: Size of the n-gram (as number of words).
+        :return: Perplexity of the test corpus.
+        """
         N = len(''.join(test_corpus.split()))
-        y = -1/N
+        y = -1 / N
         likelihood = self.compute_likelihood(corpus, test_corpus, n)
         return likelihood ** y
 
