@@ -137,6 +137,12 @@ class Main(object):
             likelihood_of_test_corpus = likelihood_of_test_corpus * probs_per_ngram[test_corpus_ngram]
         return likelihood_of_test_corpus
 
+    def compute_perplexity(self, corpus: str, test_corpus: str, n: int):
+        N = len(''.join(test_corpus.split()))
+        y = -1/N
+        likelihood = self.compute_likelihood(corpus, test_corpus, n)
+        return likelihood ** y
+
     from enum import Enum
 
     class Strs(Enum):

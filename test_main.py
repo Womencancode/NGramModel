@@ -110,6 +110,12 @@ class TestMain(TestCase):
         (sum(like|i) = 2 / sum(i) = 3) = 2/3
         product = 1/2 x 2/3 = 1/3
         """
-        expected = 1/3
+        expected = 1 / 3
         actual = self.main.compute_likelihood(corpus=self.corpus4, test_corpus='I like', n=2)
+        self.assertEqual(expected, actual)
+
+    def test_compute_perplexity(self):
+        expected = 1.2457309396155174
+        actual = self.main.compute_perplexity(corpus=self.corpus4, test_corpus='I like', n=2)
+        self.assertIsInstance(actual, float)
         self.assertEqual(expected, actual)
