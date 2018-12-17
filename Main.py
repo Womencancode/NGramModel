@@ -53,35 +53,32 @@ class Main(object):
         ngrams_and_pre_words: dict = {}
         first_word_i = n - 1
         end_i = len(corpus_tokens) - 1
-        make_pre_word_ngram = True
         for i in range(first_word_i, end_i):
-            pre_words_ngrams = self._make_ngram(corpus_tokens, make_pre_word_ngram, i, n)
+            if i - (n - 1) < 0:
+                continue
+            pre_words_ngrams = self._make_ngrams(corpus_tokens, i, n, make_pre_word_ngram=True)
             current_token = (corpus_tokens[i],)
-            ngrams = tuple(pre_words_ngrams) + current_token
+            ngrams = pre_words_ngrams + current_token
             if self.Strs.END.value in ngrams:
                 continue
             else:
-                ngrams_and_pre_words[ngrams] = pre_words_ngrams
+                ngrams_and_pre_words[ngrams] = tuple(pre_words_ngrams)
         return ngrams_and_pre_words
 
-    def _make_ngram(self, corpus_tokens: list, make_pre_word_ngram: bool, corpus_index: int, n: int):
+    def _make_ngrams(self, corpus_tokens: list, corpus_index: int, n: int, make_pre_word_ngram=False):
         """
-        Make tuple of words that make up an ngram according to size n-gram. Also makes ngram preceding each word
-        token.
+        Make list of words that make up an ngram according to size n-gram. Also makes ngram preceding each word token.
         :param corpus_tokens: Tokenized corpus, as produced by self.tokenize(corpus).
         :param corpus_index: Position of current word token according to 0-indexing.
         :param make_pre_word_ngram: True to make ngram of preceding words only (not including the last word token).
         :param n: Size of n-gram (as number of words).
         :return: List of words that precede current word in corpus.
         """
-        pre_words_ngram = []
-        end_i = -1
-        if corpus_index - (n - 1) >= 0:
-            if make_pre_word_ngram:
-                end_i = 0
-            for i in range(n - 1, end_i, -1):
-                pre_words_ngram.append(corpus_tokens[corpus_index - i])
-        return tuple(pre_words_ngram)
+        ngrams = []
+        end_i = 0 if make_pre_word_ngram else -1
+        for i in range(n - 1, end_i, -1):
+            ngrams.append(corpus_tokens[corpus_index - i])
+        return tuple(ngrams)
 
     def compute_probabilities_per_word(self, corpus: str, n: int):
         """
@@ -128,8 +125,17 @@ class Main(object):
 
     def compute_likelihood(self, corpus: str, test_corpus: str, n: int):
         probs_per_ngram = self.compute_probabilities_per_word(corpus, n)
-        # likelihood_of_test_corpus =
-
+        test_corpus_tokens = self.tokenize(test_corpus, n)
+        test_corpus_ngrams = ()
+        end_i = len(test_corpus_tokens) - 1
+        for i in range(end_i):
+            if i - (n - 1) < 0:
+                continue
+            test_corpus_ngrams = test_corpus_ngrams + (self._make_ngrams(test_corpus_tokens, i, n), )
+        likelihood_of_test_corpus = 1
+        for test_corpus_ngram in test_corpus_ngrams:
+            likelihood_of_test_corpus = likelihood_of_test_corpus * probs_per_ngram[test_corpus_ngram]
+        return likelihood_of_test_corpus
 
     from enum import Enum
 
