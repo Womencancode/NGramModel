@@ -119,3 +119,23 @@ class TestMain(TestCase):
         actual = self.main.compute_perplexity(corpus=self.corpus4, test_corpus='I like', n=2)
         self.assertIsInstance(actual, float)
         self.assertEqual(expected, actual)
+
+    def test_calculate_vocabulary_size(self):
+        """
+        corpus2_tokens_n2: #start#, there, is, a, potato, on, my, foot, #end#, #start#, there, is, foot, on, my,
+        potato, #end#, #start#, the, potato, that, is, on, my, foot, has, a, foot, on, it, #end#
+        Distinct tokens (ignoring #start# & #end#): there, is, a, potato, on, my, foot, the, that, has, it
+        Sum of distinct tokens = 11
+        Total words: 25
+        vocabulary size (V) = 11/25
+        """
+        expected = 11 / 25
+        actual = self.main.calculate_vocabulary_size(self.corpus2)
+        self.assertEqual(expected, actual)
+
+    def test__tokenize_less_start_end(self):
+        expected = ['there', 'is', 'a', 'potato', 'on', 'my', 'foot', 'there', 'is', 'foot', 'on', 'my', 'potato',
+                    'the', 'potato', 'that', 'is', 'on', 'my', 'foot', 'has', 'a', 'foot', 'on', 'it']
+        actual = self.main._tokenize_less_start_end(self.corpus2)
+        self.assertEqual(expected, actual)
+

@@ -159,6 +159,25 @@ class Main(object):
         likelihood = self.compute_likelihood(corpus, test_corpus, n)
         return likelihood ** y
 
+    def calculate_vocabulary_size(self, corpus: str):
+        """
+        Calculate vocabulary size of corpus (for training), as the number of distinct tokens (not including #start#
+        and #end# tokens, divided by the total number of words in the corpus.
+        :param corpus: Space-delimited words, used as a training corpus.
+        :return: V, size of vocabulary of the corpus.
+        """
+        corpus_tokens_less = self._tokenize_less_start_end(corpus)
+        V = len(set(corpus_tokens_less)) / len(corpus_tokens_less)
+        return V
+
+    def _tokenize_less_start_end(self, corpus: str):
+        """
+        Tokenize a corpus, remove #start# and #end#.
+        :return: Tokenized corpus, lacking #start# and #end# tokens.
+        """
+        corpus_tokens = self.tokenize(corpus, 0)
+        return [x for x in corpus_tokens if x != self.Strs.END.value]
+
     from enum import Enum
 
     class Strs(Enum):
