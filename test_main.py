@@ -12,6 +12,7 @@ class TestMain(TestCase):
         self.corpus2 = 'There is a potato on my foot. There is foot on my potato. The potato that is on my foot  has ' \
                        'a foot on it.'
         self.corpus3 = 'I like Python programming.'
+        self.corpus4 = 'I like Python programming. But I like machine learning even more, I do.'
         self.corpus2_tokens_n2 = ['#start#', 'there', 'is', 'a', 'potato', 'on', 'my', 'foot', '#end#', '#start#',
                                   'there', 'is', 'foot', 'on', 'my', 'potato', '#end#', '#start#', 'the', 'potato',
                                   'that', 'is', 'on', 'my', 'foot', 'has', 'a', 'foot', 'on', 'it', '#end#']
@@ -39,16 +40,16 @@ class TestMain(TestCase):
         actual = self.main._parse_punctuation(corpus=self.corpus1)
         self.assertEqual(expected, actual)
 
-    def test__make_ngram_pre_word_True(self):
+    def test__make_ngrams_pre_word_True(self):
         expected = ('i', 'like', 'python')
-        actual = self.main._make_ngram(corpus_tokens=self.corpus3_tokens_n4, make_pre_word_ngram=True,
-                                       corpus_index=6, n=4)
+        actual = self.main._make_ngrams(corpus_tokens=self.corpus3_tokens_n4, corpus_index=6, n=4,
+                                        make_pre_word_ngram=True)
         self.assertEqual(expected, actual)
 
-    def test__make_ngram(self):
+    def test__make_ngrams_pre_word_False(self):
         expected = ('i', 'like', 'python', 'programming')
-        actual = self.main._make_ngram(corpus_tokens=self.corpus3_tokens_n4, make_pre_word_ngram=False,
-                                       corpus_index=6, n=4)
+        actual = self.main._make_ngrams(corpus_tokens=self.corpus3_tokens_n4, corpus_index=6, n=4,
+                                        make_pre_word_ngram=False)
         self.assertEqual(expected, actual)
 
     def test_make_ngrams_and_pre_word_ngrams(self):
@@ -83,11 +84,11 @@ class TestMain(TestCase):
         (sum(it|on) = 1 / sum(on) = 4) = 1/4
         2/3 x 1 x 1/3 x 1/2 x 1/3 x 3/4 x 2/3 x 1/3 x 2/4 x 1/3 x 1/3 x 1 x 1/3 x 1 x 1/3 x 1/4 x 1 x 1/2 x 1/4
         """
-        expected = {('#start#', 'there'): 2/3, ('there', 'is'): 1/1, ('is', 'a'): 1/3, ('a', 'potato'): 1/2,
-                    ('potato', 'on'): 1/3, ('on', 'my'): 3/4, ('my', 'foot'): 2/3, ('is', 'foot'): 1/3,
-                    ('foot', 'on'): 2/4, ('my', 'potato'): 1/3, ('#start#', 'the'): 1/3, ('the', 'potato'): 1/1,
-                    ('potato', 'that'): 1/3, ('that', 'is'): 1/1, ('is', 'on'): 1/3, ('foot', 'has'): 1/4,
-                    ('has', 'a'): 1/1, ('a', 'foot'): 1/2, ('on', 'it'): 1/4}
+        expected = {('#start#', 'there'): 2 / 3, ('there', 'is'): 1 / 1, ('is', 'a'): 1 / 3, ('a', 'potato'): 1 / 2,
+                    ('potato', 'on'): 1 / 3, ('on', 'my'): 3 / 4, ('my', 'foot'): 2 / 3, ('is', 'foot'): 1 / 3,
+                    ('foot', 'on'): 2 / 4, ('my', 'potato'): 1 / 3, ('#start#', 'the'): 1 / 3, ('the', 'potato'): 1 / 1,
+                    ('potato', 'that'): 1 / 3, ('that', 'is'): 1 / 1, ('is', 'on'): 1 / 3, ('foot', 'has'): 1 / 4,
+                    ('has', 'a'): 1 / 1, ('a', 'foot'): 1 / 2, ('on', 'it'): 1 / 4}
         actual = self.main.compute_probabilities_per_word(corpus=self.corpus2, n=2)
         self.maxDiff = None
         self.assertEqual(expected, actual)
@@ -101,5 +102,14 @@ class TestMain(TestCase):
     #     print('Size of main object: ' + str(sys.getsizeof(self.main, set())))
     #     print('Deep size of main object: ' + str(asizeof(self.main, set())))
 
-
-
+    def test_compute_likelihood(self):
+        """
+        corpus4: 'I like Python programming. But I like machine learning even more, I do.'
+        test_corpus = 'I like'
+        (sum(i|#start#) = 1 / sum(#start#) = 2) = 1/2
+        (sum(like|i) = 2 / sum(i) = 3) = 2/3
+        product = 1/2 x 2/3 = 1/3
+        """
+        expected = 1/3
+        actual = self.main.compute_likelihood(corpus=self.corpus4, test_corpus='I like', n=2)
+        self.assertEqual(expected, actual)
