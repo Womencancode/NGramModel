@@ -16,16 +16,16 @@ class Main(object):
         corpus = corpus.lower()
         corpus_tokens = corpus.split()
         for i in range(n - 1):
-            corpus_tokens.insert(0, self.Strs.STRT.value)
-        if corpus_tokens[len(corpus_tokens) - 1] != self.Strs.END.value:
-            corpus_tokens.append(self.Strs.END.value)
-        end_indices = [i for i, x in enumerate(corpus_tokens) if x == self.Strs.END.value and i != len(corpus_tokens)
+            corpus_tokens.insert(0, self.TOKENS.STRT.value)
+        if corpus_tokens[len(corpus_tokens) - 1] != self.TOKENS.END.value:
+            corpus_tokens.append(self.TOKENS.END.value)
+        end_indices = [i for i, x in enumerate(corpus_tokens) if x == self.TOKENS.END.value and i != len(corpus_tokens)
                        - 1]
         inserted_starts = 0
         for i, end_index in enumerate(end_indices):
             insert_start_index = end_index + 1
             for j in range(n - 1):
-                corpus_tokens.insert(insert_start_index + inserted_starts, self.Strs.STRT.value)
+                corpus_tokens.insert(insert_start_index + inserted_starts, self.TOKENS.STRT.value)
                 inserted_starts += 1
         return corpus_tokens
 
@@ -38,28 +38,29 @@ class Main(object):
         pattern_nonstop_punct = re.compile(r'[][{},;:()/~"_|]+')
         pattern_stop_punct = re.compile('[.!?]+')
         corpus = pattern_nonstop_punct.sub('', corpus)
-        corpus = pattern_stop_punct.sub(' ' + self.Strs.END.value, corpus)
+        corpus = pattern_stop_punct.sub(' ' + self.TOKENS.END.value, corpus)
         return corpus
 
-    def make_ngrams_and_pre_word_ngrams(self, corpus_tokens: list, n: int):
+    def make_ngrams_and_pre_word_ngrams(self, corpus_tokens: list, n: int, use_Lap_smooth=False):
         """
         Make lists of n-grams paired to the preceding (n-1)-gram with the whole n-gram as the key and the preceding
         words as the value. For example: where n=4, the 4-gram list for word D is [A,B,C,D]. The key-value paired
         lists are: [A,B,C,D]:[A,B,C].
         :param corpus_tokens: Tokenized corpus, as produced by self.tokenize(corpus).
         :param n: Size of the n-gram (as number of words).
+        :param use_Lap_smooth: True for using Laplacian smoothing, by making n-grams with the #UNK# token as end word.
         :return: Lists of n-gram paired to their preceding (n-1)-gram.
         """
-        ngrams_and_pre_words: dict = {}
+        ngrams_and_pre_words = {}
         first_word_i = n - 1
         end_i = len(corpus_tokens) - 1
         for i in range(first_word_i, end_i):
             if i - (n - 1) < 0:
                 continue
             pre_words_ngrams = self._make_ngrams(corpus_tokens, i, n, make_pre_word_ngram=True)
-            current_token = (corpus_tokens[i],)
+            current_token = (self.TOKENS.UNK.value,) if use_Lap_smooth else (corpus_tokens[i],)
             ngrams = pre_words_ngrams + current_token
-            if self.Strs.END.value in ngrams:
+            if self.TOKENS.END.value in ngrams:
                 continue
             else:
                 ngrams_and_pre_words[ngrams] = tuple(pre_words_ngrams)
@@ -80,21 +81,34 @@ class Main(object):
             ngrams.append(corpus_tokens[corpus_index - i])
         return tuple(ngrams)
 
-    def compute_probabilities_per_word(self, corpus: str, n: int):
+    # NOT SURE THIS IS COMPLETE. NEEDS TESTING.
+    def compute_probabilities_per_word(self, corpus: str, n: int, use_Lap_smooth=False):
         """
         Compute a list of probabilities of n-grams in a corpus, sampled with a sliding window of one word,
-        in the normal left-to-right direction of English text.
+        in the normal left-to-right direction of English text. Can employ Laplacian smoothing by assigning occurrence
+        of n-gram ending with #UNK# to 1 (sum of 0 + 1).
         :param corpus: Space-delimited words.
         :param n: Size of the n-gram (as number of words).
+        :param use_Lap_smooth: True to use Laplacian smoothing.
         :return: List of n-grams each paired with their computed probability.
         """
         corpus_tokens = self.tokenize(corpus, n)
         ngrams_and_pre_word_ngrams = self.make_ngrams_and_pre_word_ngrams(corpus_tokens, n)
+        if use_Lap_smooth:
+            UNK_ngrams_and_pre_word_ngrams = self.make_ngrams_and_pre_word_ngrams(corpus_tokens, n,
+                                                                                  use_Lap_smooth=use_Lap_smooth)
+            ngrams_and_pre_word_ngrams.update(UNK_ngrams_and_pre_word_ngrams)
         ngram_occurrences = self._count_occurrences(corpus_tokens, n)
         pre_ngram_occurrences = self._count_occurrences(corpus_tokens, n - 1)
         probs_per_ngram = {}
+        V = 0
+        Lap_smooth_suppl = 0
+        if use_Lap_smooth:
+            V = self.calculate_vocabulary_size(corpus)
+            Lap_smooth_suppl = 1
         for ngram, pre_ngram in ngrams_and_pre_word_ngrams.items():
-            probs_per_ngram[ngram] = ngram_occurrences[ngram] / pre_ngram_occurrences[pre_ngram]
+            probs_per_ngram[ngram] = (ngram_occurrences[ngram] + Lap_smooth_suppl) / (pre_ngram_occurrences[pre_ngram]\
+                                     + V)
         return probs_per_ngram
 
     def _count_occurrences(self, corpus_tokens: list, window_size: int):
@@ -113,7 +127,7 @@ class Main(object):
             else:
                 for j in range(window_size):
                     ngram.append(corpus_tokens[i + j])
-                if self.Strs.END.value in ngram:
+                if self.TOKENS.END.value in ngram:
                     continue
                 else:
                     ngram_key = tuple(ngram)
@@ -123,6 +137,11 @@ class Main(object):
                         ngram_occurrences[ngram_key] = 1
         return ngram_occurrences
 
+    # Note: I would add bool argument use_Lap_smooth here as well. True would result in passing the tokenized
+    # test_corpus to a method which together with the training corpus, replaces any words in the test_corpus that are
+    # not found in the training corpus, with the #UNK# token. This would allow the likelihood to be calculated from
+    # the probs_per_ngram data structure that would hold probabilities per n-gram ending with #UNK#. But this was not
+    # a stated requirement of Task 4, so I have not done it.
     def compute_likelihood(self, corpus: str, test_corpus: str, n: int):
         """
         Calculate likelihood of a test corpus, based on the probabilities of all n-grams in a training corpus (which
@@ -159,15 +178,18 @@ class Main(object):
         likelihood = self.compute_likelihood(corpus, test_corpus, n)
         return likelihood ** y
 
-    def calculate_vocabulary_size(self, corpus: str):
+    def calculate_vocabulary_size(self, corpus: str, use_Lap_smooth=True):
         """
         Calculate vocabulary size of corpus (for training), as the number of distinct tokens (not including #start#
         and #end# tokens, divided by the total number of words in the corpus.
         :param corpus: Space-delimited words, used as a training corpus.
+        :param use_Lap_smooth: True to include #UNK# as a token, adding 1 to the number of distinct tokens. True by
+        default because this is currently only intended to be used in the context of Laplacian smoothing.
         :return: V, size of vocabulary of the corpus.
         """
         corpus_tokens_less = self._tokenize_less_start_end(corpus)
-        V = len(set(corpus_tokens_less)) / len(corpus_tokens_less)
+        Lap_smooth_suppl = 1 if use_Lap_smooth else 0
+        V = (len(set(corpus_tokens_less)) + Lap_smooth_suppl) / (len(corpus_tokens_less) + Lap_smooth_suppl)
         return V
 
     def _tokenize_less_start_end(self, corpus: str):
@@ -176,10 +198,11 @@ class Main(object):
         :return: Tokenized corpus, lacking #start# and #end# tokens.
         """
         corpus_tokens = self.tokenize(corpus, 0)
-        return [x for x in corpus_tokens if x != self.Strs.END.value]
+        return [x for x in corpus_tokens if x != self.TOKENS.END.value]
 
     from enum import Enum
 
-    class Strs(Enum):
+    class TOKENS(Enum):
         STRT = '#start#'
         END = '#end#'
+        UNK = '#UNK#'
