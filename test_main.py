@@ -60,6 +60,15 @@ class TestMain(TestCase):
         actual = self.main.make_ngrams_and_pre_word_ngrams(corpus_tokens=self.corpus3_tokens_n4, n=4)
         self.assertEqual(expected, actual)
 
+    def test_make_ngrams_and_pre_word_ngrams_use_Lap_smooth(self):
+        expected = {('#start#', '#start#', '#start#', '#UNK#'): ('#start#', '#start#', '#start#'),
+                    ('#start#', '#start#', 'i', '#UNK#'): ('#start#', '#start#', 'i'),
+                    ('#start#', 'i', 'like', '#UNK#'): ('#start#', 'i', 'like'),
+                    ('i', 'like', 'python', '#UNK#'): ('i', 'like', 'python')}
+        actual = self.main.make_ngrams_and_pre_word_ngrams(corpus_tokens=self.corpus3_tokens_n4, n=4,
+                                                           use_Lap_smooth=True)
+        self.assertEqual(expected, actual)
+
     def test_compute_probabilities_per_word(self):
         """
         'There is a potato on my foot. There is foot on my potato. The potato that is on my foot has a foot on it.'
@@ -93,6 +102,42 @@ class TestMain(TestCase):
         self.maxDiff = None
         self.assertEqual(expected, actual)
 
+    # THIS TEST IS TO BE COMPLETED
+    def test_compute_probabilities_per_word_use_Lap_smooth(self):
+        """
+        'There is a potato on my foot. There is foot on my potato. The potato that is on my foot has a foot on it.'
+        (sum(there|#start#) = 2 / sum(#start#) = 3) = 2/3
+        (sum(is|there) = 2 / sum(there) = 2) = 1
+        (sum(a|is) = 1 / sum(is) = 3) = 1/3
+        (sum(potato|a) = 1 / sum(a) = 2) = 1/2
+        (sum(on|potato) = 1 / sum(potato) = 3) = 1/3
+        (sum(my|on) = 3 / sum(on) = 4) = 3/4
+        (sum(foot|my) = 2 / sum(my) = 3) = 2/3
+        (sum(foot|is) = 1 / sum(is) = 3) = 1/3
+        (sum(on|foot) = 2 / sum(foot) = 4) = 2/4
+        (sum(potato|my) = 1 / sum(potato) = 3) = 1/3
+        (sum(the|#start#) = 1 / sum(#start#) = 3) = 1/3
+        (sum(potato|the) = 1 / sum(the) = 1) = 1
+        (sum(that|potato) = 1 / sum(potato) = 3) = 1/3
+        (sum(is|that) = 1 / sum(that) = 1) = 1
+        (sum(on|is) = 1 / sum(is) = 3) = 1/3
+        (sum(has|foot) = 1 / sum(foot) = 4) = 1/4
+        (sum(a|has) = 1 / sum(has) = 1) = 1
+        (sum(foot|a) = 1 / sum(a) = 2) = 1/2
+        (sum(it|on) = 1 / sum(on) = 4) = 1/4
+        2/3 x 1 x 1/3 x 1/2 x 1/3 x 3/4 x 2/3 x 1/3 x 2/4 x 1/3 x 1/3 x 1 x 1/3 x 1 x 1/3 x 1/4 x 1 x 1/2 x 1/4
+        """
+        expected = {('#start#', 'there'): 2 / 3, ('there', 'is'): 1 / 1, ('is', 'a'): 1 / 3, ('a', 'potato'): 1 / 2,
+                    ('potato', 'on'): 1 / 3, ('on', 'my'): 3 / 4, ('my', 'foot'): 2 / 3, ('is', 'foot'): 1 / 3,
+                    ('foot', 'on'): 2 / 4, ('my', 'potato'): 1 / 3, ('#start#', 'the'): 1 / 3, ('the', 'potato'): 1 / 1,
+                    ('potato', 'that'): 1 / 3, ('that', 'is'): 1 / 1, ('is', 'on'): 1 / 3, ('foot', 'has'): 1 / 4,
+                    ('has', 'a'): 1 / 1, ('a', 'foot'): 1 / 2, ('on', 'it'): 1 / 4}
+
+
+        actual = self.main.compute_probabilities_per_word(corpus=self.corpus2, n=2)
+        self.maxDiff = None
+        self.assertEqual(expected, actual)
+
     def test__count_occurrences(self):
         expected = {('#start#', 'i'): 1, ('i', 'like'): 1, ('like', 'python'): 1, ('python', 'programming'): 1}
         actual = self.main._count_occurrences(corpus_tokens=self.corpus3_tokens_n2, window_size=2)
@@ -120,16 +165,16 @@ class TestMain(TestCase):
         self.assertIsInstance(actual, float)
         self.assertEqual(expected, actual)
 
-    def test_calculate_vocabulary_size(self):
+    def test_calculate_vocabulary_size_use_Lap_smooth(self):
         """
         corpus2_tokens_n2: #start#, there, is, a, potato, on, my, foot, #end#, #start#, there, is, foot, on, my,
         potato, #end#, #start#, the, potato, that, is, on, my, foot, has, a, foot, on, it, #end#
         Distinct tokens (ignoring #start# & #end#): there, is, a, potato, on, my, foot, the, that, has, it
-        Sum of distinct tokens = 11
-        Total words: 25
-        vocabulary size (V) = 11/25
+        Sum of distinct tokens = 11 + 1 for #UNK#
+        Total words: 25 + 1 for #UNK#
+        vocabulary size (V) = 12/26
         """
-        expected = 11 / 25
+        expected = 12 / 26
         actual = self.main.calculate_vocabulary_size(self.corpus2)
         self.assertEqual(expected, actual)
 
