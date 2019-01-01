@@ -175,17 +175,15 @@ class Main(object):
         likelihood = self.compute_likelihood(train_corpus, test_corpus, n)
         return likelihood ** y
 
-    def calculate_vocabulary_size(self, corpus: str, use_Lap_smooth=True):
+    def calculate_vocabulary_size(self, corpus: str):
         """
         Calculate vocabulary size of corpus (for training), as the number of distinct tokens (not including #start#
         and #end# tokens, divided by the total number of words in the corpus.
         :param corpus: Space-delimited words, used as a training corpus.
-        :param use_Lap_smooth: True to include #UNK# as a token, adding 1 to the number of distinct tokens. True by
-        default because this is currently only intended to be used in the context of Laplacian smoothing.
         :return: V, size of vocabulary of the corpus.
         """
         corpus_tokens_less = self._tokenize_less_start_end(corpus)
-        Lap_smooth_suppl = 1 if use_Lap_smooth else 0
+        Lap_smooth_suppl = 1
         V = (len(set(corpus_tokens_less)) + Lap_smooth_suppl) / (len(corpus_tokens_less) + Lap_smooth_suppl)
         return V
 
@@ -202,4 +200,3 @@ class Main(object):
     class TOKENS(Enum):
         STRT = '#start#'
         END = '#end#'
-        UNK = '#UNK#'
