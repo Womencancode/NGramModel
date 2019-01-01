@@ -60,15 +60,6 @@ class TestMain(TestCase):
         actual = self.main.make_ngrams_and_pre_word_ngrams(tokenized_corpus=self.corpus3_tokens_n4, n=4)
         self.assertEqual(expected, actual)
 
-    def test_make_ngrams_and_pre_word_ngrams_use_Lap_smooth(self):
-        expected = {('#start#', '#start#', '#start#', '#UNK#'): ('#start#', '#start#', '#start#'),
-                    ('#start#', '#start#', 'i', '#UNK#'): ('#start#', '#start#', 'i'),
-                    ('#start#', 'i', 'like', '#UNK#'): ('#start#', 'i', 'like'),
-                    ('i', 'like', 'python', '#UNK#'): ('i', 'like', 'python')}
-        actual = self.main.make_ngrams_and_pre_word_ngrams(tokenized_corpus=self.corpus3_tokens_n4, n=4,
-                                                           use_Lap_smooth=True)
-        self.assertEqual(expected, actual)
-
     def test_compute_probabilities_per_word(self):
         """
         'There is a potato on my foot. There is foot on my potato. The potato that is on my foot has a foot on it.'
@@ -109,12 +100,15 @@ class TestMain(TestCase):
         'There is a potato on my foot. There is foot on my potato. The potato that is on my foot has a foot on it.'
         Same probabilities as test_compute_probabilities_per_word(), but with 1 added to numerator, and V (number of
         distinct tokens in train corpus) added to denominator.
+        Sum of distinct tokens = 11 + 1 to account for an #UNK#
         """
-        expected = {('#start#', 'there'): 2 / 3, ('there', 'is'): 1 / 1, ('is', 'a'): 1 / 3, ('a', 'potato'): 1 / 2,
-                    ('potato', 'on'): 1 / 3, ('on', 'my'): 3 / 4, ('my', 'foot'): 2 / 3, ('is', 'foot'): 1 / 3,
-                    ('foot', 'on'): 2 / 4, ('my', 'potato'): 1 / 3, ('#start#', 'the'): 1 / 3, ('the', 'potato'): 1 / 1,
-                    ('potato', 'that'): 1 / 3, ('that', 'is'): 1 / 1, ('is', 'on'): 1 / 3, ('foot', 'has'): 1 / 4,
-                    ('has', 'a'): 1 / 1, ('a', 'foot'): 1 / 2, ('on', 'it'): 1 / 4}
+        expected = {('#start#', 'there'): (1+2)/(3+12), ('there', 'is'): (2+1)/(2+12), ('is', 'a'): (1+1)/(3+12),
+                    ('a', 'potato'): (1+1)/(2+12), ('potato', 'on'): (1+1)/(3+12), ('on', 'my'): (1+3)/(4+12),
+                    ('my', 'foot'): (1+2)/(3+12), ('is', 'foot'): (1+1)/(3+12), ('foot', 'on'): (1+2)/(4+12),
+                    ('my', 'potato'): (1+1)/(3+12), ('#start#', 'the'): (1+1)/(3+12), ('the', 'potato'): (1+1)/(1+12),
+                    ('potato', 'that'): (1+1)/(3+12), ('that', 'is'): (1+1)/(1+12), ('is', 'on'): (1+1)/(3+12),
+                    ('foot', 'has'): (1+1)/(4+12), ('has', 'a'): (1+1)/(1+12), ('a', 'foot'): (1+1)/(2+12),
+                    ('on', 'it'): (1+1)/(4+12)}
 
         actual = self.main.compute_probabilities_per_word(corpus=self.corpus2, n=2, use_Lap_smooth=True)
         self.maxDiff = None
@@ -147,7 +141,7 @@ class TestMain(TestCase):
         self.assertIsInstance(actual, float)
         self.assertEqual(expected, actual)
 
-    def test_calculate_vocabulary_size_use_Lap_smooth(self):
+    def test_calculate_vocabulary_size(self):
         """
         corpus2_tokens_n2: #start#, there, is, a, potato, on, my, foot, #end#, #start#, there, is, foot, on, my,
         potato, #end#, #start#, the, potato, that, is, on, my, foot, has, a, foot, on, it, #end#
@@ -156,7 +150,7 @@ class TestMain(TestCase):
         Total words: 25 + 1 for #UNK#
         vocabulary size (V) = 12/26
         """
-        expected = 12 / 26
+        expected = 12
         actual = self.main.calculate_vocabulary_size(self.corpus2)
         self.assertEqual(expected, actual)
 
