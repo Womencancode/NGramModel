@@ -177,14 +177,15 @@ class Main(object):
 
     def calculate_vocabulary_size(self, corpus: str):
         """
-        Calculate vocabulary size of corpus (for training), as the number of distinct tokens (not including #start#
-        and #end# tokens, divided by the total number of words in the corpus.
+        Calculate vocabulary size of corpus (for training), as the number of distinct tokens including #UNK# (not
+        including #start# and #end# tokens, divided by the total number of words in the corpus.
         :param corpus: Space-delimited words, used as a training corpus.
         :return: V, size of vocabulary of the corpus.
         """
         corpus_tokens_less = self._tokenize_less_start_end(corpus)
         Lap_smooth_suppl = 1
-        V = (len(set(corpus_tokens_less)) + Lap_smooth_suppl) / (len(corpus_tokens_less) + Lap_smooth_suppl)
+        num_of_distinct_tokens = len(set(corpus_tokens_less))
+        V = num_of_distinct_tokens + Lap_smooth_suppl
         return V
 
     def _tokenize_less_start_end(self, corpus: str):
