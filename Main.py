@@ -42,14 +42,13 @@ class Main(object):
         corpus = pattern_stop_punct.sub(' ' + self.TOKENS.END.value, corpus)
         return corpus
 
-    def make_ngrams_and_pre_word_ngrams(self, tokenized_corpus: list, n: int, use_Lap_smooth=False):
+    def make_ngrams_and_pre_word_ngrams(self, tokenized_corpus: list, n: int):
         """
         Make lists of n-grams paired to the preceding (n-1)-gram, using the whole n-gram as the key and the preceding
         words (n-1)-gram as the value. For example: where n=4, the 4-gram list for word D is [A,B,C,D]. The key-value
         paired lists are: [A,B,C,D]:[A,B,C].
         :param tokenized_corpus: Tokenized corpus, as produced by self.tokenize(corpus).
         :param n: Size of the n-gram (as number of words).
-        :param use_Lap_smooth: True for using Laplacian smoothing, by making n-grams with the #UNK# token as end word.
         :return: Lists of n-gram paired to their preceding (n-1)-gram.
         """
         ngrams_and_pre_words = {}
@@ -59,7 +58,7 @@ class Main(object):
             if i - (n - 1) < 0:
                 continue
             pre_words_ngrams = self._make_ngrams(tokenized_corpus, i, n, make_pre_word_ngram=True)
-            current_token = (self.TOKENS.UNK.value,) if use_Lap_smooth else (tokenized_corpus[i],)
+            current_token = (tokenized_corpus[i],)
             ngrams = pre_words_ngrams + current_token
             if self.TOKENS.END.value in ngrams:
                 continue
@@ -95,10 +94,6 @@ class Main(object):
         """
         tokenized_corpus = self.tokenize(corpus, n)
         ngrams_and_pre_word_ngrams = self.make_ngrams_and_pre_word_ngrams(tokenized_corpus, n)
-        if use_Lap_smooth:
-            UNK_ngrams_and_pre_word_ngrams = self.make_ngrams_and_pre_word_ngrams(tokenized_corpus, n,
-                                                                                  use_Lap_smooth=use_Lap_smooth)
-            ngrams_and_pre_word_ngrams.update(UNK_ngrams_and_pre_word_ngrams)
         ngram_occurrences = self._count_occurrences(tokenized_corpus, n)
         pre_ngram_occurrences = self._count_occurrences(tokenized_corpus, n - 1)
         probs_per_ngram = {}
